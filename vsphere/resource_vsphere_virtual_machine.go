@@ -1446,8 +1446,7 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 		}
 	}
 
-	return vm, nil
-	// return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
+	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
 }
 
 func createVCenterDeploy(d *schema.ResourceData, meta interface{}) (*virtualmachine.VCenterDeploy, error) {
@@ -1683,6 +1682,7 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 		}
 	}
 	// Finally time to power on the virtual machine!
+	log.Printf("[DEBUG] -------------POWERING ON------------------------")
 	pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
 	if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
 		return fmt.Errorf("error powering on virtual machine: %s", err)
