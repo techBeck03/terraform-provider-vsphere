@@ -1635,27 +1635,27 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
 
 	// Perform updates
-	if _, ok := d.GetOk("datastore_cluster_id"); ok {
-		err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
-	} else {
-		err = virtualmachine.Reconfigure(vm, cfgSpec)
-	}
-	if err != nil {
-		return resourceVSphereVirtualMachineRollbackCreate(
-			d,
-			meta,
-			vm,
-			fmt.Errorf("error reconfiguring virtual machine: %s", err),
-		)
-	}
-
-	// vmprops, err := virtualmachine.Properties(vm)
+	// if _, ok := d.GetOk("datastore_cluster_id"); ok {
+	// 	err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
+	// } else {
+	// 	err = virtualmachine.Reconfigure(vm, cfgSpec)
+	// }
 	// if err != nil {
-	// 	return err
+	// 	return resourceVSphereVirtualMachineRollbackCreate(
+	// 		d,
+	// 		meta,
+	// 		vm,
+	// 		fmt.Errorf("error reconfiguring virtual machine: %s", err),
+	// 	)
 	// }
 
-	// // This should only change if deploying from a Content Library item.
-	// d.Set("guest_id", vmprops.Config.GuestId)
+	vmprops, err := virtualmachine.Properties(vm)
+	if err != nil {
+		return err
+	}
+
+	// This should only change if deploying from a Content Library item.
+	d.Set("guest_id", vmprops.Config.GuestId)
 
 	// Upgrade the VM's hardware version if needed.
 	err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
