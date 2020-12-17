@@ -355,25 +355,25 @@ func resourceVSphereVirtualMachineCreate(d *schema.ResourceData, meta interface{
 	// Ensure that VMs are on the correct host and relocate if necessary. Do this
 	// near the end of the VM creation since it involves updating the
 	// ResourceData.
-	// vprops, err := virtualmachine.Properties(vm)
-	// if err != nil {
-	// 	return err
-	// }
-	// if hid, ok := d.GetOk("host_system_id"); hid.(string) != vprops.Runtime.Host.Reference().Value && ok {
-	// 	err = resourceVSphereVirtualMachineRead(d, meta)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// Restore the old host_system_id so we can still tell if a relocation is
-	// 	// necessary.
-	// 	err = d.Set("host_system_id", hid.(string))
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	if err = resourceVSphereVirtualMachineUpdateLocation(d, meta); err != nil {
-	// 		return err
-	// 	}
-	// }
+	vprops, err := virtualmachine.Properties(vm)
+	if err != nil {
+		return err
+	}
+	if hid, ok := d.GetOk("host_system_id"); hid.(string) != vprops.Runtime.Host.Reference().Value && ok {
+		err = resourceVSphereVirtualMachineRead(d, meta)
+		if err != nil {
+			return err
+		}
+		// Restore the old host_system_id so we can still tell if a relocation is
+		// necessary.
+		err = d.Set("host_system_id", hid.(string))
+		if err != nil {
+			return err
+		}
+		if err = resourceVSphereVirtualMachineUpdateLocation(d, meta); err != nil {
+			return err
+		}
+	}
 
 	// Wait for guest IP address if we have been set to wait for one
 	err = virtualmachine.WaitForGuestIP(
@@ -1682,18 +1682,18 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 		}
 	}
 	// Finally time to power on the virtual machine!
-	pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
-	if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
-		return fmt.Errorf("error powering on virtual machine: %s", err)
-	}
-	// If we customized, wait on customization.
-	if cw != nil {
-		log.Printf("[DEBUG] %s: Waiting for VM customization to complete", resourceVSphereVirtualMachineIDString(d))
-		<-cw.Done()
-		if err := cw.Err(); err != nil {
-			return fmt.Errorf(formatVirtualMachineCustomizationWaitError, vm.InventoryPath, err)
-		}
-	}
+	// pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
+	// if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
+	// 	return fmt.Errorf("error powering on virtual machine: %s", err)
+	// }
+	// // If we customized, wait on customization.
+	// if cw != nil {
+	// 	log.Printf("[DEBUG] %s: Waiting for VM customization to complete", resourceVSphereVirtualMachineIDString(d))
+	// 	<-cw.Done()
+	// 	if err := cw.Err(); err != nil {
+	// 		return fmt.Errorf(formatVirtualMachineCustomizationWaitError, vm.InventoryPath, err)
+	// 	}
+	// }
 	return nil
 }
 
