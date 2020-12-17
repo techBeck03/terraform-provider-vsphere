@@ -1631,38 +1631,38 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 			fmt.Errorf("error processing CDROM device changes post-clone: %s", err),
 		)
 	}
-	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
-	log.Printf("[DEBUG] %s: Final device list: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceListString(devices))
-	log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
+	// cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
+	// log.Printf("[DEBUG] %s: Final device list: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceListString(devices))
+	// log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
 
-	// Perform updates
-	if _, ok := d.GetOk("datastore_cluster_id"); ok {
-		err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
-	} else {
-		err = virtualmachine.Reconfigure(vm, cfgSpec)
-	}
-	if err != nil {
-		return resourceVSphereVirtualMachineRollbackCreate(
-			d,
-			meta,
-			vm,
-			fmt.Errorf("error reconfiguring virtual machine: %s", err),
-		)
-	}
+	// // Perform updates
+	// if _, ok := d.GetOk("datastore_cluster_id"); ok {
+	// 	err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
+	// } else {
+	// 	err = virtualmachine.Reconfigure(vm, cfgSpec)
+	// }
+	// if err != nil {
+	// 	return resourceVSphereVirtualMachineRollbackCreate(
+	// 		d,
+	// 		meta,
+	// 		vm,
+	// 		fmt.Errorf("error reconfiguring virtual machine: %s", err),
+	// 	)
+	// }
 
-	vmprops, err := virtualmachine.Properties(vm)
-	if err != nil {
-		return err
-	}
+	// vmprops, err := virtualmachine.Properties(vm)
+	// if err != nil {
+	// 	return err
+	// }
 
-	// This should only change if deploying from a Content Library item.
-	d.Set("guest_id", vmprops.Config.GuestId)
+	// // This should only change if deploying from a Content Library item.
+	// d.Set("guest_id", vmprops.Config.GuestId)
 
-	// Upgrade the VM's hardware version if needed.
-	err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
-	if err != nil {
-		return err
-	}
+	// // Upgrade the VM's hardware version if needed.
+	// err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
+	// if err != nil {
+	// 	return err
+	// }
 
 	var cw *virtualMachineCustomizationWaiter
 	// Send customization spec if any has been defined.
