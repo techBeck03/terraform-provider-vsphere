@@ -1649,19 +1649,19 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 		)
 	}
 
-	vmprops, err := virtualmachine.Properties(vm)
-	if err != nil {
-		return err
-	}
-
-	// This should only change if deploying from a Content Library item.
-	d.Set("guest_id", vmprops.Config.GuestId)
-
-	// // Upgrade the VM's hardware version if needed.
-	// err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
+	// vmprops, err := virtualmachine.Properties(vm)
 	// if err != nil {
 	// 	return err
 	// }
+
+	// // This should only change if deploying from a Content Library item.
+	// d.Set("guest_id", vmprops.Config.GuestId)
+
+	// Upgrade the VM's hardware version if needed.
+	err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
+	if err != nil {
+		return err
+	}
 
 	var cw *virtualMachineCustomizationWaiter
 	// Send customization spec if any has been defined.
