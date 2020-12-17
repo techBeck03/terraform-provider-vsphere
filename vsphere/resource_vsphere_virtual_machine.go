@@ -1319,6 +1319,7 @@ func resourceVSphereVirtualMachineCreateBareStandard(
 // Deploy vm from ovf/ova template
 func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interface{}) (*object.VirtualMachine, error) {
 
+	log.Printf("[DEBUG] -------------TEST DEBUG------------------------")
 	localOvfPath := d.Get("ovf_deploy.0.local_ovf_path").(string)
 	remoteOvfUrl := d.Get("ovf_deploy.0.remote_ovf_url").(string)
 
