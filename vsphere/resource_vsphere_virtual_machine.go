@@ -355,25 +355,25 @@ func resourceVSphereVirtualMachineCreate(d *schema.ResourceData, meta interface{
 	// Ensure that VMs are on the correct host and relocate if necessary. Do this
 	// near the end of the VM creation since it involves updating the
 	// ResourceData.
-	vprops, err := virtualmachine.Properties(vm)
-	if err != nil {
-		return err
-	}
-	if hid, ok := d.GetOk("host_system_id"); hid.(string) != vprops.Runtime.Host.Reference().Value && ok {
-		err = resourceVSphereVirtualMachineRead(d, meta)
-		if err != nil {
-			return err
-		}
-		// Restore the old host_system_id so we can still tell if a relocation is
-		// necessary.
-		err = d.Set("host_system_id", hid.(string))
-		if err != nil {
-			return err
-		}
-		if err = resourceVSphereVirtualMachineUpdateLocation(d, meta); err != nil {
-			return err
-		}
-	}
+	// vprops, err := virtualmachine.Properties(vm)
+	// if err != nil {
+	// 	return err
+	// }
+	// if hid, ok := d.GetOk("host_system_id"); hid.(string) != vprops.Runtime.Host.Reference().Value && ok {
+	// 	err = resourceVSphereVirtualMachineRead(d, meta)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	// Restore the old host_system_id so we can still tell if a relocation is
+	// 	// necessary.
+	// 	err = d.Set("host_system_id", hid.(string))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if err = resourceVSphereVirtualMachineUpdateLocation(d, meta); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	// Wait for guest IP address if we have been set to wait for one
 	err = virtualmachine.WaitForGuestIP(
@@ -1445,8 +1445,8 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 			return nil, fmt.Errorf("error while applying vapp config %s", err)
 		}
 	}
-	return vm, fmt.Errorf("error while applying vapp config ---- test")
-	//return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
+
+	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
 }
 
 func createVCenterDeploy(d *schema.ResourceData, meta interface{}) (*virtualmachine.VCenterDeploy, error) {
