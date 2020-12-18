@@ -1649,19 +1649,19 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
 
 	// Perform updates
-	if _, ok := d.GetOk("datastore_cluster_id"); ok {
-		err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
-	} else {
-		err = virtualmachine.Reconfigure(vm, cfgSpec)
-	}
-	if err != nil {
-		return resourceVSphereVirtualMachineRollbackCreate(
-			d,
-			meta,
-			vm,
-			fmt.Errorf("error reconfiguring virtual machine: %s", err),
-		)
-	}
+	// if _, ok := d.GetOk("datastore_cluster_id"); ok {
+	// 	err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
+	// } else {
+	// 	err = virtualmachine.Reconfigure(vm, cfgSpec)
+	// }
+	// if err != nil {
+	// 	return resourceVSphereVirtualMachineRollbackCreate(
+	// 		d,
+	// 		meta,
+	// 		vm,
+	// 		fmt.Errorf("error reconfiguring virtual machine: %s", err),
+	// 	)
+	// }
 
 	vmprops, err := virtualmachine.Properties(vm)
 	if err != nil {
