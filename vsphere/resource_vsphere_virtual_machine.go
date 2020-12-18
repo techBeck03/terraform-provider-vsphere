@@ -1599,17 +1599,17 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 		)
 	}
 	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
-	// // Disks
-	// devices, delta, err = virtualdevice.DiskPostCloneOperation(d, client, devices)
-	// if err != nil {
-	// 	return resourceVSphereVirtualMachineRollbackCreate(
-	// 		d,
-	// 		meta,
-	// 		vm,
-	// 		fmt.Errorf("error processing disk changes post-clone: %s", err),
-	// 	)
-	// }
-	// cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
+	// Disks
+	devices, delta, err = virtualdevice.DiskPostCloneOperation(d, client, devices)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("error processing disk changes post-clone: %s", err),
+		)
+	}
+	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
 	// // Network devices
 	// devices, delta, err = virtualdevice.NetworkInterfacePostCloneOperation(d, client, devices)
 	// if err != nil {
