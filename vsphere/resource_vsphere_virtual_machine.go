@@ -1573,43 +1573,43 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	// configuration of the newly cloned VM. This is basically a subset of update
 	// with the stipulation that there is currently no state to help move this
 	// along.
-	cfgSpec, err := expandVirtualMachineConfigSpec(d, client)
-	if err != nil {
-		return resourceVSphereVirtualMachineRollbackCreate(
-			d,
-			meta,
-			vm,
-			fmt.Errorf("error in virtual machine configuration: %s", err),
-		)
-	}
+	// cfgSpec, err := expandVirtualMachineConfigSpec(d, client)
+	// if err != nil {
+	// 	return resourceVSphereVirtualMachineRollbackCreate(
+	// 		d,
+	// 		meta,
+	// 		vm,
+	// 		fmt.Errorf("error in virtual machine configuration: %s", err),
+	// 	)
+	// }
 
-	// To apply device changes, we need the current devicecfgSpec from the config
-	// info. We then filter this list through the same apply process we did for
-	// create, which will apply the changes in an incremental fashion.
-	devices := object.VirtualDeviceList(vprops.Config.Hardware.Device)
-	var delta []types.BaseVirtualDeviceConfigSpec
-	// First check the state of our SCSI bus. Normalize it if we need to.
-	devices, delta, err = virtualdevice.NormalizeBus(devices, d)
-	if err != nil {
-		return resourceVSphereVirtualMachineRollbackCreate(
-			d,
-			meta,
-			vm,
-			fmt.Errorf("error normalizing SCSI bus post-clone: %s", err),
-		)
-	}
-	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
-	// Disks
-	devices, delta, err = virtualdevice.DiskPostCloneOperation(d, client, devices)
-	if err != nil {
-		return resourceVSphereVirtualMachineRollbackCreate(
-			d,
-			meta,
-			vm,
-			fmt.Errorf("error processing disk changes post-clone: %s", err),
-		)
-	}
-	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
+	// // To apply device changes, we need the current devicecfgSpec from the config
+	// // info. We then filter this list through the same apply process we did for
+	// // create, which will apply the changes in an incremental fashion.
+	// devices := object.VirtualDeviceList(vprops.Config.Hardware.Device)
+	// var delta []types.BaseVirtualDeviceConfigSpec
+	// // First check the state of our SCSI bus. Normalize it if we need to.
+	// devices, delta, err = virtualdevice.NormalizeBus(devices, d)
+	// if err != nil {
+	// 	return resourceVSphereVirtualMachineRollbackCreate(
+	// 		d,
+	// 		meta,
+	// 		vm,
+	// 		fmt.Errorf("error normalizing SCSI bus post-clone: %s", err),
+	// 	)
+	// }
+	// cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
+	// // Disks
+	// devices, delta, err = virtualdevice.DiskPostCloneOperation(d, client, devices)
+	// if err != nil {
+	// 	return resourceVSphereVirtualMachineRollbackCreate(
+	// 		d,
+	// 		meta,
+	// 		vm,
+	// 		fmt.Errorf("error processing disk changes post-clone: %s", err),
+	// 	)
+	// }
+	// cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
 	// // Network devices
 	// devices, delta, err = virtualdevice.NetworkInterfacePostCloneOperation(d, client, devices)
 	// if err != nil {
@@ -1638,20 +1638,20 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	// log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
 
 	// Perform updates
-	if _, ok := d.GetOk("datastore_cluster_id"); ok {
-		err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
-	} else {
-		log.Printf("---------------- Reconfiguring VM ----------------")
-		err = virtualmachine.Reconfigure(vm, cfgSpec)
-	}
-	if err != nil {
-		return resourceVSphereVirtualMachineRollbackCreate(
-			d,
-			meta,
-			vm,
-			fmt.Errorf("error reconfiguring virtual machine: %s", err),
-		)
-	}
+	// if _, ok := d.GetOk("datastore_cluster_id"); ok {
+	// 	err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
+	// } else {
+	// 	log.Printf("---------------- Reconfiguring VM ----------------")
+	// 	err = virtualmachine.Reconfigure(vm, cfgSpec)
+	// }
+	// if err != nil {
+	// 	return resourceVSphereVirtualMachineRollbackCreate(
+	// 		d,
+	// 		meta,
+	// 		vm,
+	// 		fmt.Errorf("error reconfiguring virtual machine: %s", err),
+	// 	)
+	// }
 
 	if d.HasChange("vapp") {
 		dataCenterID := d.Get("datacenter_id").(string)
