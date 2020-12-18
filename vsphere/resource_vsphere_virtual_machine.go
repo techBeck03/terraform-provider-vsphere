@@ -1319,7 +1319,6 @@ func resourceVSphereVirtualMachineCreateBareStandard(
 // Deploy vm from ovf/ova template
 func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interface{}) (*object.VirtualMachine, error) {
 
-	log.Printf("[DEBUG] -------------TEST DEBUG------------------------")
 	localOvfPath := d.Get("ovf_deploy.0.local_ovf_path").(string)
 	remoteOvfUrl := d.Get("ovf_deploy.0.remote_ovf_url").(string)
 
@@ -1630,6 +1629,19 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 			fmt.Errorf("error processing CDROM device changes post-clone: %s", err),
 		)
 	}
+
+	// update vapp properties
+	vappConfig, err := expandVAppConfig(d, client)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("error processing vapp property changes post-clone: %s", err),
+		)
+	}
+	cfgSpec.VAppConfig = vappConfig
+
 	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
 	log.Printf("[DEBUG] %s: Final device list: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceListString(devices))
 	log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
@@ -1682,7 +1694,6 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 		}
 	}
 	// Finally time to power on the virtual machine!
-	log.Printf("[DEBUG] -------------POWERING ON------------------------")
 	pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
 	if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
 		return fmt.Errorf("error powering on virtual machine: %s", err)
