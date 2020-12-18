@@ -1431,21 +1431,21 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] VM %q - UUID is %q", vm.InventoryPath, vprops.Config.Uuid)
 	d.SetId(vprops.Config.Uuid)
 	// update vapp properties
-	// vappConfig, err := expandVAppConfig(d, client)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("error while creating vapp properties config %s", err)
-	// }
-	// log.Printf("---------------- vappConfig inside deploy ovf ----------------")
-	// log.Println(vappConfig)
-	// if vappConfig != nil {
-	// 	vmConfigSpec := types.VirtualMachineConfigSpec{
-	// 		VAppConfig: vappConfig,
-	// 	}
-	// 	err = virtualmachine.Reconfigure(vm, vmConfigSpec)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("error while applying vapp config %s", err)
-	// 	}
-	// }
+	vappConfig, err := expandVAppConfig(d, client)
+	if err != nil {
+		return nil, fmt.Errorf("error while creating vapp properties config %s", err)
+	}
+	log.Printf("---------------- vappConfig inside deploy ovf ----------------")
+	log.Println(vappConfig)
+	if vappConfig != nil {
+		vmConfigSpec := types.VirtualMachineConfigSpec{
+			VAppConfig: vappConfig,
+		}
+		err = virtualmachine.Reconfigure(vm, vmConfigSpec)
+		if err != nil {
+			return nil, fmt.Errorf("error while applying vapp config %s", err)
+		}
+	}
 
 	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
 }
