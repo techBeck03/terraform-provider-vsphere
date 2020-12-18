@@ -1556,7 +1556,7 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta interface{}, vm *object.VirtualMachine) error {
 	client := meta.(*VSphereClient).vimClient
 	poolID := d.Get("resource_pool_id").(string)
-	_, err := resourcepool.FromID(client, poolID)
+	pool, err := resourcepool.FromID(client, poolID)
 	vprops, err := virtualmachine.Properties(vm)
 	if err != nil {
 		return resourceVSphereVirtualMachineRollbackCreate(
@@ -1573,151 +1573,153 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	// configuration of the newly cloned VM. This is basically a subset of update
 	// with the stipulation that there is currently no state to help move this
 	// along.
-	// cfgSpec, err := expandVirtualMachineConfigSpec(d, client)
-	// if err != nil {
-	// 	return resourceVSphereVirtualMachineRollbackCreate(
-	// 		d,
-	// 		meta,
-	// 		vm,
-	// 		fmt.Errorf("error in virtual machine configuration: %s", err),
-	// 	)
-	// }
-
-	// // To apply device changes, we need the current devicecfgSpec from the config
-	// // info. We then filter this list through the same apply process we did for
-	// // create, which will apply the changes in an incremental fashion.
-	// devices := object.VirtualDeviceList(vprops.Config.Hardware.Device)
-	// var delta []types.BaseVirtualDeviceConfigSpec
-	// // First check the state of our SCSI bus. Normalize it if we need to.
-	// devices, delta, err = virtualdevice.NormalizeBus(devices, d)
-	// if err != nil {
-	// 	return resourceVSphereVirtualMachineRollbackCreate(
-	// 		d,
-	// 		meta,
-	// 		vm,
-	// 		fmt.Errorf("error normalizing SCSI bus post-clone: %s", err),
-	// 	)
-	// }
-	// cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
-	// // Disks
-	// devices, delta, err = virtualdevice.DiskPostCloneOperation(d, client, devices)
-	// if err != nil {
-	// 	return resourceVSphereVirtualMachineRollbackCreate(
-	// 		d,
-	// 		meta,
-	// 		vm,
-	// 		fmt.Errorf("error processing disk changes post-clone: %s", err),
-	// 	)
-	// }
-	// cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
-	// // Network devices
-	// devices, delta, err = virtualdevice.NetworkInterfacePostCloneOperation(d, client, devices)
-	// if err != nil {
-	// 	return resourceVSphereVirtualMachineRollbackCreate(
-	// 		d,
-	// 		meta,
-	// 		vm,
-	// 		fmt.Errorf("error processing network device changes post-clone: %s", err),
-	// 	)
-	// }
-	// cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
-	// // CDROM
-	// devices, delta, err = virtualdevice.CdromPostCloneOperation(d, client, devices)
-	// if err != nil {
-	// 	return resourceVSphereVirtualMachineRollbackCreate(
-	// 		d,
-	// 		meta,
-	// 		vm,
-	// 		fmt.Errorf("error processing CDROM device changes post-clone: %s", err),
-	// 	)
-	// }
-
-	// cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
-
-	// log.Printf("[DEBUG] %s: Final device list: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceListString(devices))
-	// log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
-
-	// Perform updates
-	// if _, ok := d.GetOk("datastore_cluster_id"); ok {
-	// 	err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
-	// } else {
-	// 	log.Printf("---------------- Reconfiguring VM ----------------")
-	// 	err = virtualmachine.Reconfigure(vm, cfgSpec)
-	// }
-	// if err != nil {
-	// 	return resourceVSphereVirtualMachineRollbackCreate(
-	// 		d,
-	// 		meta,
-	// 		vm,
-	// 		fmt.Errorf("error reconfiguring virtual machine: %s", err),
-	// 	)
-	// }
-
-	if d.HasChange("vapp") {
-		dataCenterID := d.Get("datacenter_id").(string)
-		name := d.Get("name").(string)
-		var vmApp *object.VirtualMachine
-		datacenterObj, _ := datacenterFromID(client, dataCenterID)
-		vmApp, _ = virtualmachine.FromPath(client, name, datacenterObj)
-
-		// update vapp properties
-		vappConfig, _ := expandVAppConfig(d, client)
-
-		log.Printf("---------------- vappConfig inside deploy ovf ----------------")
-		log.Println(vappConfig)
-		if vappConfig != nil {
-			vmConfigSpec := types.VirtualMachineConfigSpec{
-				VAppConfig: vappConfig,
-			}
-			virtualmachine.Reconfigure(vmApp, vmConfigSpec)
-		}
+	cfgSpec, err := expandVirtualMachineConfigSpec(d, client)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("error in virtual machine configuration: %s", err),
+		)
 	}
 
-	// vmprops, err := virtualmachine.Properties(vm)
-	// if err != nil {
-	// 	return err
-	// }
+	// To apply device changes, we need the current devicecfgSpec from the config
+	// info. We then filter this list through the same apply process we did for
+	// create, which will apply the changes in an incremental fashion.
+	devices := object.VirtualDeviceList(vprops.Config.Hardware.Device)
+	var delta []types.BaseVirtualDeviceConfigSpec
+	// First check the state of our SCSI bus. Normalize it if we need to.
+	devices, delta, err = virtualdevice.NormalizeBus(devices, d)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("error normalizing SCSI bus post-clone: %s", err),
+		)
+	}
+	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
+	// Disks
+	devices, delta, err = virtualdevice.DiskPostCloneOperation(d, client, devices)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("error processing disk changes post-clone: %s", err),
+		)
+	}
+	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
+	// Network devices
+	devices, delta, err = virtualdevice.NetworkInterfacePostCloneOperation(d, client, devices)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("error processing network device changes post-clone: %s", err),
+		)
+	}
+	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
+	// CDROM
+	devices, delta, err = virtualdevice.CdromPostCloneOperation(d, client, devices)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("error processing CDROM device changes post-clone: %s", err),
+		)
+	}
 
-	// // This should only change if deploying from a Content Library item.
-	// d.Set("guest_id", vmprops.Config.GuestId)
+	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
 
-	// // Upgrade the VM's hardware version if needed.
-	// err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
-	// if err != nil {
-	// 	return err
-	// }
+	log.Printf("[DEBUG] %s: Final device list: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceListString(devices))
+	log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
 
-	// var cw *virtualMachineCustomizationWaiter
-	// // Send customization spec if any has been defined.
-	// if len(d.Get("clone.0.customize").([]interface{})) > 0 {
-	// 	family, err := resourcepool.OSFamily(client, pool, d.Get("guest_id").(string))
-	// 	if err != nil {
-	// 		return fmt.Errorf("cannot find OS family for guest ID %q: %s", d.Get("guest_id").(string), err)
-	// 	}
-	// 	custSpec := vmworkflow.ExpandCustomizationSpec(d, family)
-	// 	cw = newVirtualMachineCustomizationWaiter(client, vm, d.Get("clone.0.customize.0.timeout").(int))
-	// 	if err := virtualmachine.Customize(vm, custSpec); err != nil {
-	// 		// Roll back the VMs as per the error handling in reconfigure.
-	// 		if derr := resourceVSphereVirtualMachineDelete(d, meta); derr != nil {
-	// 			return fmt.Errorf(formatVirtualMachinePostCloneRollbackError, vm.InventoryPath, err, derr)
+	removeSpec := false
+	cfgSpec.VAppConfigRemoved = &removeSpec
+	// Perform updates
+	if _, ok := d.GetOk("datastore_cluster_id"); ok {
+		err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
+	} else {
+		log.Printf("---------------- Reconfiguring VM ----------------")
+		err = virtualmachine.Reconfigure(vm, cfgSpec)
+	}
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("error reconfiguring virtual machine: %s", err),
+		)
+	}
+
+	// if d.HasChange("vapp") {
+	// 	dataCenterID := d.Get("datacenter_id").(string)
+	// 	name := d.Get("name").(string)
+	// 	var vmApp *object.VirtualMachine
+	// 	datacenterObj, _ := datacenterFromID(client, dataCenterID)
+	// 	vmApp, _ = virtualmachine.FromPath(client, name, datacenterObj)
+
+	// 	// update vapp properties
+	// 	vappConfig, _ := expandVAppConfig(d, client)
+
+	// 	log.Printf("---------------- vappConfig inside deploy ovf ----------------")
+	// 	log.Println(vappConfig)
+	// 	if vappConfig != nil {
+	// 		vmConfigSpec := types.VirtualMachineConfigSpec{
+	// 			VAppConfig: vappConfig,
 	// 		}
-	// 		d.SetId("")
-	// 		return fmt.Errorf("error sending customization spec: %s", err)
+	// 		virtualmachine.Reconfigure(vmApp, vmConfigSpec)
 	// 	}
 	// }
-	// // Finally time to power on the virtual machine!
-	// pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
-	// if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
-	// 	return fmt.Errorf("error powering on virtual machine: %s", err)
-	// }
-	// // If we customized, wait on customization.
-	// if cw != nil {
-	// 	log.Printf("[DEBUG] %s: Waiting for VM customization to complete", resourceVSphereVirtualMachineIDString(d))
-	// 	<-cw.Done()
-	// 	if err := cw.Err(); err != nil {
-	// 		return fmt.Errorf(formatVirtualMachineCustomizationWaitError, vm.InventoryPath, err)
-	// 	}
-	// }
+
+	vmprops, err := virtualmachine.Properties(vm)
+	if err != nil {
+		return err
+	}
+
+	// This should only change if deploying from a Content Library item.
+	d.Set("guest_id", vmprops.Config.GuestId)
+
+	// Upgrade the VM's hardware version if needed.
+	err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
+	if err != nil {
+		return err
+	}
+
+	var cw *virtualMachineCustomizationWaiter
+	// Send customization spec if any has been defined.
+	if len(d.Get("clone.0.customize").([]interface{})) > 0 {
+		family, err := resourcepool.OSFamily(client, pool, d.Get("guest_id").(string))
+		if err != nil {
+			return fmt.Errorf("cannot find OS family for guest ID %q: %s", d.Get("guest_id").(string), err)
+		}
+		custSpec := vmworkflow.ExpandCustomizationSpec(d, family)
+		cw = newVirtualMachineCustomizationWaiter(client, vm, d.Get("clone.0.customize.0.timeout").(int))
+		if err := virtualmachine.Customize(vm, custSpec); err != nil {
+			// Roll back the VMs as per the error handling in reconfigure.
+			if derr := resourceVSphereVirtualMachineDelete(d, meta); derr != nil {
+				return fmt.Errorf(formatVirtualMachinePostCloneRollbackError, vm.InventoryPath, err, derr)
+			}
+			d.SetId("")
+			return fmt.Errorf("error sending customization spec: %s", err)
+		}
+	}
+	// Finally time to power on the virtual machine!
+	pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
+	if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
+		return fmt.Errorf("error powering on virtual machine: %s", err)
+	}
+	// If we customized, wait on customization.
+	if cw != nil {
+		log.Printf("[DEBUG] %s: Waiting for VM customization to complete", resourceVSphereVirtualMachineIDString(d))
+		<-cw.Done()
+		if err := cw.Err(); err != nil {
+			return fmt.Errorf(formatVirtualMachineCustomizationWaitError, vm.InventoryPath, err)
+		}
+	}
 	return nil
 }
 
