@@ -610,7 +610,9 @@ func flattenExtraConfig(d *schema.ResourceData, opts []types.BaseOptionValue) er
 // configuration - if they have, we add them with an empty value to ensure
 // they are removed from vAppConfig on the update.
 func expandVAppConfig(d *schema.ResourceData, client *govmomi.Client) (*types.VmConfigSpec, error) {
+	log.Printf("---------- Inside expandVAppConfig -----------")
 	if !d.HasChange("vapp") {
+		log.Printf("---------- Returning nil -----------")
 		return nil, nil
 	}
 
