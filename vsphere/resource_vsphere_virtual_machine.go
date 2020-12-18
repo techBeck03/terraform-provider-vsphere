@@ -1652,33 +1652,33 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	// 	)
 	// }
 
-	if d.HasChange("vapp") {
-		log.Printf("-------------- inside vapp change --------------")
-		vappConfig, err := expandVAppConfig(d, client)
-		if err != nil {
-			return resourceVSphereVirtualMachineRollbackCreate(
-				d,
-				meta,
-				vm,
-				fmt.Errorf("error processing vapp property changes post-clone: %s", err),
-			)
-		}
-		if vappConfig != nil {
-			vmConfigSpec := types.VirtualMachineConfigSpec{
-				VAppConfig: vappConfig,
-			}
-			err = virtualmachine.Reconfigure(vm, vmConfigSpec)
-			if err != nil {
-				return resourceVSphereVirtualMachineRollbackCreate(
-					d,
-					meta,
-					vm,
-					fmt.Errorf("error processing vapp property changes post-clone: %s", err),
-				)
-			}
-			log.Printf("-------------- finished vapp change --------------")
-		}
-	}
+	// if d.HasChange("vapp") {
+	// 	log.Printf("-------------- inside vapp change --------------")
+	// 	vappConfig, err := expandVAppConfig(d, client)
+	// 	if err != nil {
+	// 		return resourceVSphereVirtualMachineRollbackCreate(
+	// 			d,
+	// 			meta,
+	// 			vm,
+	// 			fmt.Errorf("error processing vapp property changes post-clone: %s", err),
+	// 		)
+	// 	}
+	// 	if vappConfig != nil {
+	// 		vmConfigSpec := types.VirtualMachineConfigSpec{
+	// 			VAppConfig: vappConfig,
+	// 		}
+	// 		err = virtualmachine.Reconfigure(vm, vmConfigSpec)
+	// 		if err != nil {
+	// 			return resourceVSphereVirtualMachineRollbackCreate(
+	// 				d,
+	// 				meta,
+	// 				vm,
+	// 				fmt.Errorf("error processing vapp property changes post-clone: %s", err),
+	// 			)
+	// 		}
+	// 		log.Printf("-------------- finished vapp change --------------")
+	// 	}
+	// }
 
 	vmprops, err := virtualmachine.Properties(vm)
 	if err != nil {
