@@ -1557,31 +1557,28 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	client := meta.(*VSphereClient).vimClient
 
 	if d.HasChange("vapp") {
-		log.Printf("-------------- inside vapp change --------------")
-		appVM, _ := virtualmachine.FromUUID(client, d.Id())
-		vappConfig, err := expandVAppConfig(d, client)
-		if err != nil {
-			return resourceVSphereVirtualMachineRollbackCreate(
-				d,
-				meta,
-				appVM,
-				fmt.Errorf("error processing vapp property changes post-clone: %s", err),
-			)
-		}
+		dataCenterId := d.Get("datacenter_id").(string)
+		name := d.Get("name").(string)
+		var vm *object.VirtualMachine
+		datacenterObj, _ := datacenterFromID(client, dataCenterId)
+		vm, _ = virtualmachine.FromPath(client, name, datacenterObj)
+
+		// set ID for the vm
+		vprops, _ := virtualmachine.Properties(vm)
+
+		log.Printf("[DEBUG] VM %q - UUID is %q", vm.InventoryPath, vprops.Config.Uuid)
+		d.SetId(vprops.Config.Uuid)
+
+		// update vapp properties
+		vappConfig, _ := expandVAppConfig(d, client)
+
+		log.Printf("---------------- vappConfig inside deploy ovf ----------------")
+		log.Println(vappConfig)
 		if vappConfig != nil {
 			vmConfigSpec := types.VirtualMachineConfigSpec{
 				VAppConfig: vappConfig,
 			}
-			err = virtualmachine.Reconfigure(appVM, vmConfigSpec)
-			if err != nil {
-				return resourceVSphereVirtualMachineRollbackCreate(
-					d,
-					meta,
-					appVM,
-					fmt.Errorf("error processing vapp property changes post-clone: %s", err),
-				)
-			}
-			log.Printf("-------------- finished vapp change --------------")
+			virtualmachine.Reconfigure(vm, vmConfigSpec)
 		}
 	}
 
