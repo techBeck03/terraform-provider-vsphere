@@ -1557,17 +1557,17 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	client := meta.(*VSphereClient).vimClient
 	poolID := d.Get("resource_pool_id").(string)
 	_, _ = resourcepool.FromID(client, poolID)
-	// vprops, err := virtualmachine.Properties(vm)
-	// if err != nil {
-	// 	return resourceVSphereVirtualMachineRollbackCreate(
-	// 		d,
-	// 		meta,
-	// 		vm,
-	// 		fmt.Errorf("cannot fetch properties of created virtual machine: %s", err),
-	// 	)
-	// }
-	// log.Printf("[DEBUG] VM %q - UUID is %q", vm.InventoryPath, vprops.Config.Uuid)
-	// d.SetId(vprops.Config.Uuid)
+	vprops, err := virtualmachine.Properties(vm)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("cannot fetch properties of created virtual machine: %s", err),
+		)
+	}
+	log.Printf("[DEBUG] VM %q - UUID is %q", vm.InventoryPath, vprops.Config.Uuid)
+	d.SetId(vprops.Config.Uuid)
 
 	// // Before starting or proceeding any further, we need to normalize the
 	// // configuration of the newly cloned VM. This is basically a subset of update
