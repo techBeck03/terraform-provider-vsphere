@@ -653,6 +653,7 @@ func expandVAppConfig(d *schema.ResourceData, client *govmomi.Client) (*types.Vm
 	allProperties := vmProps.Config.VAppConfig.GetVmConfigInfo().Property
 
 	for _, p := range allProperties {
+		log.Printf("Key = %d Value = %s", p.Key, p.Id)
 		if *p.UserConfigurable == true {
 			defaultValue := " "
 			if p.DefaultValue != "" {
