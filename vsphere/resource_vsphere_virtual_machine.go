@@ -1431,21 +1431,21 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] VM %q - UUID is %q", vm.InventoryPath, vprops.Config.Uuid)
 	d.SetId(vprops.Config.Uuid)
 	// update vapp properties
-	// vappConfig, err := expandVAppConfig(d, client)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("error while creating vapp properties config %s", err)
-	// }
-	// log.Printf("---------------- vappConfig inside deploy ovf ----------------")
-	// log.Println(vappConfig)
-	// if vappConfig != nil {
-	// 	vmConfigSpec := types.VirtualMachineConfigSpec{
-	// 		VAppConfig: vappConfig,
-	// 	}
-	// 	err = virtualmachine.Reconfigure(vm, vmConfigSpec)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("error while applying vapp config %s", err)
-	// 	}
-	// }
+	vappConfig, err := expandVAppConfig(d, client)
+	if err != nil {
+		return nil, fmt.Errorf("error while creating vapp properties config %s", err)
+	}
+	log.Printf("---------------- vappConfig inside deploy ovf ----------------")
+	log.Println(vappConfig)
+	if vappConfig != nil {
+		vmConfigSpec := types.VirtualMachineConfigSpec{
+			VAppConfig: vappConfig,
+		}
+		err = virtualmachine.Reconfigure(vm, vmConfigSpec)
+		if err != nil {
+			return nil, fmt.Errorf("error while applying vapp config %s", err)
+		}
+	}
 
 	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
 }
@@ -1643,7 +1643,6 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	if _, ok := d.GetOk("datastore_cluster_id"); ok {
 		err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
 	} else {
-		log.Printf("---------------- Reconfiguring VM ----------------")
 		err = virtualmachine.Reconfigure(vm, cfgSpec)
 	}
 	if err != nil {
@@ -1654,26 +1653,6 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 			fmt.Errorf("error reconfiguring virtual machine: %s", err),
 		)
 	}
-
-	// if d.HasChange("vapp") {
-	// 	dataCenterID := d.Get("datacenter_id").(string)
-	// 	name := d.Get("name").(string)
-	// 	var vmApp *object.VirtualMachine
-	// 	datacenterObj, _ := datacenterFromID(client, dataCenterID)
-	// 	vmApp, _ = virtualmachine.FromPath(client, name, datacenterObj)
-
-	// 	// update vapp properties
-	// 	vappConfig, _ := expandVAppConfig(d, client)
-
-	// 	log.Printf("---------------- vappConfig inside deploy ovf ----------------")
-	// 	log.Println(vappConfig)
-	// 	if vappConfig != nil {
-	// 		vmConfigSpec := types.VirtualMachineConfigSpec{
-	// 			VAppConfig: vappConfig,
-	// 		}
-	// 		virtualmachine.Reconfigure(vmApp, vmConfigSpec)
-	// 	}
-	// }
 
 	vmprops, err := virtualmachine.Properties(vm)
 	if err != nil {
