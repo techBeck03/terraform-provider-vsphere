@@ -1659,12 +1659,6 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 		datacenterObj, _ := datacenterFromID(client, dataCenterID)
 		vmApp, _ = virtualmachine.FromPath(client, name, datacenterObj)
 
-		// set ID for the vm
-		vprops, _ := virtualmachine.Properties(vmApp)
-
-		log.Printf("[DEBUG] VM %q - UUID is %q", vmApp.InventoryPath, vprops.Config.Uuid)
-		d.SetId(vprops.Config.Uuid)
-
 		// update vapp properties
 		vappConfig, _ := expandVAppConfig(d, client)
 
