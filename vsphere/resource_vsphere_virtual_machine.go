@@ -1556,7 +1556,7 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta interface{}, vm *object.VirtualMachine) error {
 	client := meta.(*VSphereClient).vimClient
 	poolID := d.Get("resource_pool_id").(string)
-	pool, err := resourcepool.FromID(client, poolID)
+	_, err := resourcepool.FromID(client, poolID)
 	vprops, err := virtualmachine.Properties(vm)
 	if err != nil {
 		return resourceVSphereVirtualMachineRollbackCreate(
