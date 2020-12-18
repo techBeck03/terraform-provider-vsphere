@@ -1446,8 +1446,8 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 	// 		return nil, fmt.Errorf("error while applying vapp config %s", err)
 	// 	}
 	// }
-	return vm, nil
-	// return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
+
+	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
 }
 
 func createVCenterDeploy(d *schema.ResourceData, meta interface{}) (*virtualmachine.VCenterDeploy, error) {
@@ -1631,14 +1631,10 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 			fmt.Errorf("error processing CDROM device changes post-clone: %s", err),
 		)
 	}
-
 	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
-
 	log.Printf("[DEBUG] %s: Final device list: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceListString(devices))
 	log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
 
-	// removeSpec := false
-	// cfgSpec.VAppConfigRemoved = &removeSpec
 	// Perform updates
 	if _, ok := d.GetOk("datastore_cluster_id"); ok {
 		err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
