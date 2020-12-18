@@ -1678,51 +1678,51 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 		}
 	}
 
-	vmprops, err := virtualmachine.Properties(vm)
-	if err != nil {
-		return err
-	}
+	// vmprops, err := virtualmachine.Properties(vm)
+	// if err != nil {
+	// 	return err
+	// }
 
-	// This should only change if deploying from a Content Library item.
-	d.Set("guest_id", vmprops.Config.GuestId)
+	// // This should only change if deploying from a Content Library item.
+	// d.Set("guest_id", vmprops.Config.GuestId)
 
-	// Upgrade the VM's hardware version if needed.
-	err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
-	if err != nil {
-		return err
-	}
+	// // Upgrade the VM's hardware version if needed.
+	// err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
+	// if err != nil {
+	// 	return err
+	// }
 
-	var cw *virtualMachineCustomizationWaiter
-	// Send customization spec if any has been defined.
-	if len(d.Get("clone.0.customize").([]interface{})) > 0 {
-		family, err := resourcepool.OSFamily(client, pool, d.Get("guest_id").(string))
-		if err != nil {
-			return fmt.Errorf("cannot find OS family for guest ID %q: %s", d.Get("guest_id").(string), err)
-		}
-		custSpec := vmworkflow.ExpandCustomizationSpec(d, family)
-		cw = newVirtualMachineCustomizationWaiter(client, vm, d.Get("clone.0.customize.0.timeout").(int))
-		if err := virtualmachine.Customize(vm, custSpec); err != nil {
-			// Roll back the VMs as per the error handling in reconfigure.
-			if derr := resourceVSphereVirtualMachineDelete(d, meta); derr != nil {
-				return fmt.Errorf(formatVirtualMachinePostCloneRollbackError, vm.InventoryPath, err, derr)
-			}
-			d.SetId("")
-			return fmt.Errorf("error sending customization spec: %s", err)
-		}
-	}
-	// Finally time to power on the virtual machine!
-	pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
-	if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
-		return fmt.Errorf("error powering on virtual machine: %s", err)
-	}
-	// If we customized, wait on customization.
-	if cw != nil {
-		log.Printf("[DEBUG] %s: Waiting for VM customization to complete", resourceVSphereVirtualMachineIDString(d))
-		<-cw.Done()
-		if err := cw.Err(); err != nil {
-			return fmt.Errorf(formatVirtualMachineCustomizationWaitError, vm.InventoryPath, err)
-		}
-	}
+	// var cw *virtualMachineCustomizationWaiter
+	// // Send customization spec if any has been defined.
+	// if len(d.Get("clone.0.customize").([]interface{})) > 0 {
+	// 	family, err := resourcepool.OSFamily(client, pool, d.Get("guest_id").(string))
+	// 	if err != nil {
+	// 		return fmt.Errorf("cannot find OS family for guest ID %q: %s", d.Get("guest_id").(string), err)
+	// 	}
+	// 	custSpec := vmworkflow.ExpandCustomizationSpec(d, family)
+	// 	cw = newVirtualMachineCustomizationWaiter(client, vm, d.Get("clone.0.customize.0.timeout").(int))
+	// 	if err := virtualmachine.Customize(vm, custSpec); err != nil {
+	// 		// Roll back the VMs as per the error handling in reconfigure.
+	// 		if derr := resourceVSphereVirtualMachineDelete(d, meta); derr != nil {
+	// 			return fmt.Errorf(formatVirtualMachinePostCloneRollbackError, vm.InventoryPath, err, derr)
+	// 		}
+	// 		d.SetId("")
+	// 		return fmt.Errorf("error sending customization spec: %s", err)
+	// 	}
+	// }
+	// // Finally time to power on the virtual machine!
+	// pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
+	// if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
+	// 	return fmt.Errorf("error powering on virtual machine: %s", err)
+	// }
+	// // If we customized, wait on customization.
+	// if cw != nil {
+	// 	log.Printf("[DEBUG] %s: Waiting for VM customization to complete", resourceVSphereVirtualMachineIDString(d))
+	// 	<-cw.Done()
+	// 	if err := cw.Err(); err != nil {
+	// 		return fmt.Errorf(formatVirtualMachineCustomizationWaitError, vm.InventoryPath, err)
+	// 	}
+	// }
 	return nil
 }
 
