@@ -1634,20 +1634,6 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 
 	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
 
-	// update vapp properties
-	vappConfig, err := expandVAppConfig(d, client)
-	if err != nil {
-		return resourceVSphereVirtualMachineRollbackCreate(
-			d,
-			meta,
-			vm,
-			fmt.Errorf("error processing vapp property changes post-clone: %s", err),
-		)
-	}
-	cfgSpec.VAppConfig = vappConfig
-	log.Printf("---------------- vappConfig inside post deploy ----------------")
-	log.Println(vappConfig)
-
 	log.Printf("[DEBUG] %s: Final device list: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceListString(devices))
 	log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
 
@@ -1664,6 +1650,32 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 			vm,
 			fmt.Errorf("error reconfiguring virtual machine: %s", err),
 		)
+	}
+
+	if d.HasChange("vapp") {
+		vappConfig, err := expandVAppConfig(d, client)
+		if err != nil {
+			return resourceVSphereVirtualMachineRollbackCreate(
+				d,
+				meta,
+				vm,
+				fmt.Errorf("error processing vapp property changes post-clone: %s", err),
+			)
+		}
+		if vappConfig != nil {
+			vmConfigSpec := types.VirtualMachineConfigSpec{
+				VAppConfig: vappConfig,
+			}
+			err = virtualmachine.Reconfigure(vm, vmConfigSpec)
+			if err != nil {
+				return resourceVSphereVirtualMachineRollbackCreate(
+					d,
+					meta,
+					vm,
+					fmt.Errorf("error processing vapp property changes post-clone: %s", err),
+				)
+			}
+		}
 	}
 
 	vmprops, err := virtualmachine.Properties(vm)
