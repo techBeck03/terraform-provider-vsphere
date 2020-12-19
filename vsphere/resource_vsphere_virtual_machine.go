@@ -1446,6 +1446,10 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 	}
 
 	// return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
+	pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
+	if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
+		return nil, fmt.Errorf("error powering on virtual machine: %s", err)
+	}
 	return vm, nil
 }
 
