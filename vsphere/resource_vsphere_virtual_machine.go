@@ -1435,8 +1435,6 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 	if err != nil {
 		return nil, fmt.Errorf("error while creating vapp properties config %s", err)
 	}
-	log.Printf("---------------- vappConfig inside deploy ovf ----------------")
-	log.Println(vappConfig)
 	if vappConfig != nil {
 		vmConfigSpec := types.VirtualMachineConfigSpec{
 			VAppConfig: vappConfig,
@@ -1447,7 +1445,8 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 		}
 	}
 
-	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
+	// return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
+	return vm, nil
 }
 
 func createVCenterDeploy(d *schema.ResourceData, meta interface{}) (*virtualmachine.VCenterDeploy, error) {
@@ -1639,7 +1638,7 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	if _, ok := d.GetOk("datastore_cluster_id"); ok {
 		err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
 	} else {
-		// err = virtualmachine.Reconfigure(vm, cfgSpec)
+		err = virtualmachine.Reconfigure(vm, cfgSpec)
 	}
 	if err != nil {
 		return resourceVSphereVirtualMachineRollbackCreate(
